@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Color Ramp</title>
+<style>
+  body {
+    background: #15161d;
+    color: #d6d6e0;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px;
+  }
+  #codePreview {
+    background: #1c1e29;
+    padding: 16px;
+    border-radius: 6px;
+    font-family: monospace;
+    width: 500px;
+    white-space: pre;
+  }
+  button {
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <input type="color" id="colorPicker" value="#ff6ec7">
+
+  <div>
+    <p style="margin: 4px 0; font-size: 13px; color: #888;">LIGHTS</p>
+    <div id="lightsRow" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+  </div>
+  <div>
+    <p style="margin: 4px 0; font-size: 13px; color: #888;">DARKS</p>
+    <div id="darksRow" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+  </div>
+  <div>
+    <p style="margin: 4px 0; font-size: 13px; color: #888;">ACCENTS</p>
+    <div id="accentsRow" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+  </div>
+
+  <button id="generatePaletteBtn">Generate Random Palette</button>
+  <div id="paletteResult" style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; max-width:600px;"></div>
+
+  <div>
+    <input type="text" id="varName" placeholder="variable name (e.g. pink)">
+    <button id="copyBtn">Copy as Sublime variable</button>
+  </div>
+
+  <div id="codePreview">// preview will go here</div>
+
+<script>
+  const picker = document.getElementById('colorPicker');
+
+  function hexToHsl(hex) {
+    let r = parseInt(hex.slice(1,3), 16) / 255;
+    let g = parseInt(hex.slice(3,5), 16) / 255;
+    let b = parseInt(hex.slice(5,7), 16) / 255;
+    let max = Math.max(r,g,b), min = Math.min(r,g,b);
+    let h, s, l = (max + min) / 2;
+    let d = max - min;
+    if (d === 0) { h = s = 0; }
+    else {
+      s = d / (1 - Math.abs(2*l - 1));
+      switch(max) {
+        case r: h = ((g-b)/d) % 6; break;
+        case g: h = (b-r)/d + 2; break;
+        case b: h = (r-g)/d + 4; break;
+      }
+      h *= 60;
+      if (h < 0) h += 360;
+    }
+    return [h, s*100, l*100];
+  }
+
+  function hslToHex(h, s, l) {
+    s /= 100; l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    const toHex = x => Math.round(x * 255).toString(16).padStart(2, '0');
+    return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+  }
+
+  function getLightsArray(h, s) {
+    const steps = 8;
+    const sAdj = Math.max(s - 10, 20);
+    const arr = [];
+    for (let i = 0; i < steps; i++) {
+      arr.push({ h, s: sAdj, l: 60 + i * (38 / (steps - 1)) });
+    }
+    return arr;
+  }
+
+  function getDarksArray(h, s) {
+    const steps = 8;
+    const sAdj = Math.min(s + 10, 100);
+    const arr = [];
+    for (let i = 0; i < steps; i++) {
+      arr.push({ h, s: sAdj, l: 8 + i * (32 / (steps - 1)) });
+    }
+    return arr;
+  }
+
+  function getAccentsArray(h, s, l) {
+    const hues = [h, (h+30)%360, (h+60)%360, (h+180)%360, (h+210)%360, (h-30+360)%360];
+    return hues.map(hue => ({ h: hue, s, l }));
+  }
+
+  function pickRandomUnique(arr, count) {
+    return [...arr].sort(() => Math.random() - 0.5).slice(0, count);
+  }
+
+  function renderSwatchRow(containerId, colorArray) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    colorArray.forEach(c => {
+      const hex = hslToHex(c.h, c.s, c.l);
+      const swatch = document.createElement('div');
+      swatch.title = 'Click to use as primary color';
+      swatch.style.width = '60px';
+      swatch.style.height = '60px';
+      swatch.style.background = hex;
+      swatch.style.display = 'flex';
+      swatch.style.alignItems = 'flex-end';
+      swatch.style.justifyContent = 'center';
+      swatch.style.cursor = 'pointer';
+      swatch.style.borderRadius = '4px';
+      swatch.style.border = '1px solid rgba(255,255,255,0.15)';
+
+      const label = document.createElement('span');
+      label.textContent = hex;
+      label.style.fontSize = '9px';
+      label.style.fontFamily = 'monospace';
+      label.style.background = 'rgba(0,0,0,0.65)';
+      label.style.color = '#fff';
+      label.style.padding = '1px 3px';
+      label.style.borderRadius = '2px';
+      label.style.marginBottom = '3px';
+
+      swatch.appendChild(label);
+      swatch.addEventListener('click', () => setAsPrimary(hex));
+      container.appendChild(swatch);
+    });
+  }
+
+  function setAsPrimary(hex) {
+    picker.value = hex;
+    drawPalette(hex);
+    updatePreview(hex);
+  }
+
+  function drawPalette(hex) {
+    const [h, s, l] = hexToHsl(hex);
+    renderSwatchRow('lightsRow', getLightsArray(h, s));
+    renderSwatchRow('darksRow', getDarksArray(h, s));
+    renderSwatchRow('accentsRow', getAccentsArray(h, s, l));
+  }
+
+  function updatePreview(hex) {
+    const preview = document.getElementById('codePreview');
+    preview.innerHTML =
+      `<span style="color:#6b6f8a">// example function</span>\n` +
+      `<span style="color:#c792ea">function</span> <span style="color:${hex}">getColor</span>() {\n` +
+      `  <span style="color:#c792ea">return</span> <span style="color:#5ef1a3">"${hex}"</span>;\n` +
+      `}`;
+  }
+
+  function generateRandomPalette() {
+    const hex = picker.value;
+    const [h, s, l] = hexToHsl(hex);
+
+    const lights = getLightsArray(h, s);
+    const darks = getDarksArray(h, s);
+    const accents = getAccentsArray(h, s, l);
+
+    let lightCount = Math.random() < 0.5 ? 2 : 3;
+    let darkCount = Math.random() < 0.5 ? 2 : 3;
+    let accentCount = Math.random() < 0.5 ? 2 : 3;
+    if (lightCount + darkCount + accentCount > 8) {
+      if (lightCount === 3) lightCount = 2;
+      else if (darkCount === 3) darkCount = 2;
+      else accentCount = 2;
+    }
+
+    const chosen = [
+      ...pickRandomUnique(lights, lightCount).map(c => ({...c, category: 'Light'})),
+      ...pickRandomUnique(darks, darkCount).map(c => ({...c, category: 'Dark'})),
+      ...pickRandomUnique(accents, accentCount).map(c => ({...c, category: 'Accent'}))
+    ];
+
+    const container = document.getElementById('paletteResult');
+    container.innerHTML = '';
+    chosen.forEach(c => {
+      const hexVal = hslToHex(c.h, c.s, c.l);
+      const swatch = document.createElement('div');
+      swatch.style.display = 'flex';
+      swatch.style.flexDirection = 'column';
+      swatch.style.alignItems = 'center';
+      swatch.style.gap = '4px';
+      swatch.innerHTML = `
+        <div style="width:70px; height:70px; background:${hexVal}; border-radius:6px; border:1px solid #333;"></div>
+        <span style="font-size:11px; color:#888;">${c.category}</span>
+        <span style="font-size:12px; font-family:monospace;">${hexVal}</span>
+      `;
+      container.appendChild(swatch);
+    });
+  }
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const name = document.getElementById('varName').value.trim() || 'myColor';
+    const hex = picker.value;
+    const text = `"${name}": "${hex}",`;
+    navigator.clipboard.writeText(text);
+    const btn = document.getElementById('copyBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = originalText; }, 1200);
+  });
+
+  drawPalette(picker.value);
+  updatePreview(picker.value);
+  picker.addEventListener('input', () => {
+    drawPalette(picker.value);
+    updatePreview(picker.value);
+  });
+
+  document.getElementById('generatePaletteBtn').addEventListener('click', generateRandomPalette);
+</script>
+
+</body>
+</html>
