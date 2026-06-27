@@ -9,13 +9,13 @@ alt="RAMPed Up logo" width="520"></p>
 Prototype 2. 
 Massive update. Must have for devs who like customization in their IDEs and editors.
 
-#Now the program gives you color pallets based on: 
+# Now the program gives you color palletes based on: 
 
 -Lights
 -Darks
 -Accents
 
-You can change the way the color pallets generate with the following options:
+# You can change the way the color palletes generate with the following options:
 
 -Accent Harmony 
 1. Monochromatic
@@ -35,11 +35,11 @@ You can change the way the color pallets generate with the following options:
 3. Linear 
 4. Ease In Out 
 
--Step # dropdown menu: change the amount of colors in a pallet from 3-12
+-Step quantity dropdown menu: change the amount of colors in a pallete from 3-12
 
 And the best par is that if you are a developer trying to tweak your code editor style and syntax, you can just select the language and it will give you the ENTIRE code block you need to copy and paste directly into your code editor's json and theme files. 
 
-#Working on adding more languages and file types. Currently, the file types supporting this feature are:
+# Working on adding more languages and file types. Currently, the file types supporting this feature are:
 
 -CSS Vars
 
