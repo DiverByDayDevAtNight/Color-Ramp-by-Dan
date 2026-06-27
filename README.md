@@ -48,3 +48,7 @@ And the best par is that if you are a developer trying to tweak your code editor
 -JSON
 
 -SCSS
+
+<p align="center"><img src="assets/RAMPed-Up-infographic-optimized.jpg"
+alt="RAMPed Up infographic" width="520"></p>
+
