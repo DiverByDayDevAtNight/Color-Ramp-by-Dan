@@ -1,8 +1,15 @@
+<p align="center"><img src="assets/RAMPed-Up-transparent-optimized.png"
+alt="RAMPed Up logo" width="520"></p>
+
+<h1 align="center">RAMPed Up by Diver Dan</h1>
+
+<p align="center"> A very useful tool for customizing the look of code editors and IDEs with minimal json/settings file coding</p>
+
 # Advanced-Color-Ramp-by-Dan
 Prototype 2. 
 Massive update. Must have for devs who like customization in their IDEs and editors.
 
-Now the program gives you color pallets based on: 
+#Now the program gives you color pallets based on: 
 
 -Lights
 -Darks
@@ -32,7 +39,7 @@ You can change the way the color pallets generate with the following options:
 
 And the best par is that if you are a developer trying to tweak your code editor style and syntax, you can just select the language and it will give you the ENTIRE code block you need to copy and paste directly into your code editor's json and theme files. 
 
-Working on adding more languages and file types. Currently, the file types supporting this feature are:
+#Working on adding more languages and file types. Currently, the file types supporting this feature are:
 
 -CSS Vars
 
