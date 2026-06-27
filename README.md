@@ -5,7 +5,8 @@ alt="RAMPed Up logo" width="520"></p>
 
 <p align="center"> A very useful tool for customizing the look of code editors and IDEs with minimal json/settings file coding</p>
 
-# Advanced-Color-Ramp-by-Dan
+## NOTICE:
+
 Prototype 2. 
 Massive update. Must have for devs who like customization in their IDEs and editors.
 
