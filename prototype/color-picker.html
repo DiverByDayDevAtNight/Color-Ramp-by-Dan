@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pixel Color Picker</title>
+<style>
+  body { background: #15161d; color: #d6d6e0; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 30px; }
+  #dropZone { border: 2px dashed #444; border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; }
+  canvas { max-width: 100%; cursor: crosshair; border: 1px solid #333; }
+  #result { display: flex; align-items: center; gap: 12px; font-family: monospace; font-size: 16px; }
+  #swatch { width: 40px; height: 40px; border-radius: 6px; border: 1px solid #444; }
+  button { padding: 6px 14px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div id="dropZone">Click to upload an image, or drag one here</div>
+  <input type="file" id="fileInput" accept="image/*" style="display:none;">
+  <canvas id="canvas"></canvas>
+  <div id="result">
+    <div id="swatch" style="background:#000;"></div>
+    <span id="hexOut">Click anywhere on the image above</span>
+    <button id="copyBtn">Copy</button>
+    <button id="nativeEyedropperBtn">Use Native Eyedropper (Chrome/Edge only)</button>
+  </div>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const swatch = document.getElementById('swatch');
+  const hexOut = document.getElementById('hexOut');
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => loadImage(e.target.files[0]));
+  dropZone.addEventListener('dragover', e => e.preventDefault());
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    loadImage(e.dataTransfer.files[0]);
+  });
+
+  function loadImage(file) {
+    if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = URL.createObjectURL(file);
+  }
+
+  function rgbToHex(r, g, b) {
+    const toHex = v => v.toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  canvas.addEventListener('click', e => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = Math.floor((e.clientX - rect.left) * scaleX);
+    const y = Math.floor((e.clientY - rect.top) * scaleY);
+    const pixel = ctx.getImageData(x, y, 1, 1).data;
+    const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+    swatch.style.background = hex;
+    hexOut.textContent = hex;
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(hexOut.textContent);
+  });
+
+  document.getElementById('nativeEyedropperBtn').addEventListener('click', async () => {
+    if (!window.EyeDropper) {
+      hexOut.textContent = 'Not supported in this browser';
+      return;
+    }
+    const eyeDropper = new EyeDropper();
+    try {
+      const result = await eyeDropper.open();
+      swatch.style.background = result.sRGBHex;
+      hexOut.textContent = result.sRGBHex;
+    } catch (err) {
+      // user pressed Escape, ignore
+    }
+  });
+</script>
+</body>
+</html>
